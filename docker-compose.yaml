@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: n8n_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: n8n_user
+      POSTGRES_PASSWORD: n8n_pass
+      POSTGRES_DB: n8n_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - n8n_lab_network
+
+  redis:
+    image: redis:7
+    container_name: n8n_redis
+    restart: unless-stopped
+    networks:
+      - n8n_lab_network
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n_db
+      - DB_POSTGRESDB_USER=n8n_user
+      - DB_POSTGRESDB_PASSWORD=n8n_pass
+      - QUEUE_MODE=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - N8N_HOST=n8n.local
+      - N8N_PORT=5678
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - WEBHOOK_URL=https://n8n.local
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n_lab_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: n8n_nginx
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/nginx/certs
+    depends_on:
+      - n8n
+    networks:
+      - n8n_lab_network
+
+volumes:
+  postgres_data:
+  n8n_data:
+
+networks:
+  n8n_lab_network:
+    driver: bridge
