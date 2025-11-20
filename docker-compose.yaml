@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   postgres:
     image: postgres:15
@@ -38,8 +40,9 @@ services:
       - REDIS_PORT=6379
       - N8N_HOST=n8n.local
       - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.local/
       - GENERIC_TIMEZONE=America/Sao_Paulo
-      - WEBHOOK_URL=https://n8n.local
     depends_on:
       - postgres
       - redis
